@@ -3,6 +3,7 @@ node_modules
 .env.local
 client/node_modules
 client/dist
+client/.vite
 server/node_modules
 *.sqlite3
 *.sqlite

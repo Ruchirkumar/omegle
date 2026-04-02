@@ -11,6 +11,53 @@ const initialPreferences = {
   voiceOnly: false
 };
 
+const createMemoryStorage = () => {
+  const storage = new Map();
+
+  return {
+    getItem: (key) => storage.get(key) || null,
+    setItem: (key, value) => storage.set(key, value),
+    removeItem: (key) => storage.delete(key)
+  };
+};
+
+const getSafeSessionStorage = () => {
+  try {
+    if (!window?.sessionStorage) {
+      return createMemoryStorage();
+    }
+
+    const testKey = "__omegle_next_storage_test__";
+    window.sessionStorage.setItem(testKey, "ok");
+    window.sessionStorage.removeItem(testKey);
+    return window.sessionStorage;
+  } catch (_error) {
+    return createMemoryStorage();
+  }
+};
+
+const mergePersistedState = (persistedState, currentState) => {
+  if (!persistedState || typeof persistedState !== "object") {
+    return currentState;
+  }
+
+  return {
+    ...currentState,
+    ...persistedState,
+    preferences: {
+      ...currentState.preferences,
+      ...(persistedState.preferences || {})
+    },
+    sessionHistory: Array.isArray(persistedState.sessionHistory)
+      ? persistedState.sessionHistory
+      : currentState.sessionHistory,
+    darkMode:
+      typeof persistedState.darkMode === "boolean"
+        ? persistedState.darkMode
+        : currentState.darkMode
+  };
+};
+
 export const useChatStore = create(
   persist(
     (set, get) => ({
@@ -136,7 +183,8 @@ export const useChatStore = create(
     }),
     {
       name: "omegle-next-session",
-      storage: createJSONStorage(() => sessionStorage),
+      storage: createJSONStorage(getSafeSessionStorage),
+      merge: mergePersistedState,
       partialize: (state) => ({
         sessionId: state.sessionId,
         preferences: state.preferences,
