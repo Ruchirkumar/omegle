@@ -6,3 +6,4 @@ client/dist
 server/node_modules
 *.sqlite3
 *.sqlite
+*.sqlite3-*
